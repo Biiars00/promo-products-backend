@@ -1,12 +1,21 @@
 {
     "entryFile": "src/server.ts",
     "noImplicitAdditionalProperties": "throw-on-extras",
-    "controllerPathGlobs": ["src/controllers/*.ts"],
+    "controllerPathGlobs": ["src/controllers/**/*.controller.ts"],
     "spec": {
-        "outputDirectory": "src",
-        "specVersion": 3
+        "outputDirectory": "src/docs",
+        "specVersion": 3,
+        "basePath": "/",
+        "title": "API Docs",
+        "version": "1.0.0",
+        "description": "Documentação da API ISI Products Server "
     },
     "routes": {
-        "routesDir": "src/routes"
-    }
+        "routesDir": "src/routes",
+        "middleware": "express"
+    },
+    "ignore": [
+      "**/node_modules/**",
+      "**/*.test.ts"
+    ]
 }
