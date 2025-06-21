@@ -35,9 +35,9 @@ const models: TsoaRoute.Models = {
             "description": {"dataType":"string"},
             "stock": {"dataType":"double","required":true},
             "price": {"dataType":"double","required":true},
-            "created_at": {"dataType":"string","required":true},
-            "updated_at": {"dataType":"string","required":true},
-            "is_out_of_stock": {"dataType":"boolean","required":true},
+            "createdAt": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
+            "isOutOfStock": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },
@@ -47,6 +47,7 @@ const models: TsoaRoute.Models = {
         "properties": {
             "stock": {"dataType":"double"},
             "price": {"dataType":"double"},
+            "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -54,7 +55,7 @@ const models: TsoaRoute.Models = {
     "ICheckStockProps": {
         "dataType": "refObject",
         "properties": {
-            "is_out_of_stock": {"dataType":"boolean","required":true},
+            "isOutOfStock": {"dataType":"boolean","required":true},
         },
         "additionalProperties": false,
     },
@@ -65,12 +66,12 @@ const models: TsoaRoute.Models = {
             "code": {"dataType":"string","required":true},
             "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["percent"]},{"dataType":"enum","enums":["fixed"]}],"required":true},
             "value": {"dataType":"double","required":true},
-            "oneShot": {"dataType":"boolean","required":true},
+            "oneShot": {"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"enum","enums":[null]}],"required":true},
             "validFrom": {"dataType":"string","required":true},
             "validUntil": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string"},
-            "updatedAt": {"dataType":"string"},
-            "deletedAt": {"dataType":"string"},
+            "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "deleted_at": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -80,10 +81,10 @@ const models: TsoaRoute.Models = {
         "properties": {
             "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["percent"]},{"dataType":"enum","enums":["fixed"]}],"required":true},
             "value": {"dataType":"double","required":true},
-            "oneShot": {"dataType":"boolean","required":true},
+            "oneShot": {"dataType":"union","subSchemas":[{"dataType":"boolean"},{"dataType":"enum","enums":[null]}],"required":true},
             "validFrom": {"dataType":"string","required":true},
             "validUntil": {"dataType":"string","required":true},
-            "updatedAt": {"dataType":"string"},
+            "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -137,6 +138,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProductsController_getProducts: Record<string, TsoaRoute.ParameterSchema> = {
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"array","array":{"dataType":"refObject","ref":"IProductsDataProps"},"required":true}}},
         };
         app.get('/products',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),
@@ -167,6 +169,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProductsController_getProductById: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"ref":"IProductsDataProps","required":true}}},
         };
         app.get('/products/:id',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),
@@ -198,6 +201,7 @@ export function RegisterRoutes(app: Router) {
         const argsProductsController_updateProduct: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
                 body: {"in":"body","name":"body","required":true,"ref":"IProductUpdateProps"},
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"ref":"IProductUpdateProps","required":true}}},
         };
         app.patch('/products/:id',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),
@@ -229,6 +233,7 @@ export function RegisterRoutes(app: Router) {
         const argsProductsController_inactivateProduct: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
                 body: {"in":"body","name":"body","required":true,"ref":"ICheckStockProps"},
+                setStatus: {"in":"res","name":"204","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"boolean","required":true}}},
         };
         app.delete('/products/:id',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),
@@ -260,6 +265,7 @@ export function RegisterRoutes(app: Router) {
         const argsProductsController_reactivateProduct: Record<string, TsoaRoute.ParameterSchema> = {
                 id: {"in":"path","name":"id","required":true,"dataType":"double"},
                 body: {"in":"body","name":"body","required":true,"ref":"ICheckStockProps"},
+                setStatus: {"in":"res","name":"204","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"boolean","required":true}}},
         };
         app.post('/products/:id/restore',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),

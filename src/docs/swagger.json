@@ -52,13 +52,14 @@
 						"type": "number",
 						"format": "double"
 					},
-					"created_at": {
+					"createdAt": {
 						"type": "string"
 					},
-					"updated_at": {
-						"type": "string"
+					"updatedAt": {
+						"type": "string",
+						"nullable": true
 					},
-					"is_out_of_stock": {
+					"isOutOfStock": {
 						"type": "boolean"
 					}
 				},
@@ -67,9 +68,9 @@
 					"name",
 					"stock",
 					"price",
-					"created_at",
-					"updated_at",
-					"is_out_of_stock"
+					"createdAt",
+					"updatedAt",
+					"isOutOfStock"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -83,6 +84,10 @@
 					"price": {
 						"type": "number",
 						"format": "double"
+					},
+					"updatedAt": {
+						"type": "string",
+						"nullable": true
 					}
 				},
 				"type": "object",
@@ -90,12 +95,99 @@
 			},
 			"ICheckStockProps": {
 				"properties": {
-					"is_out_of_stock": {
+					"isOutOfStock": {
 						"type": "boolean"
 					}
 				},
 				"required": [
-					"is_out_of_stock"
+					"isOutOfStock"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ICouponProps": {
+				"properties": {
+					"code": {
+						"type": "string"
+					},
+					"type": {
+						"type": "string",
+						"enum": [
+							"percent",
+							"fixed"
+						]
+					},
+					"value": {
+						"type": "number",
+						"format": "double"
+					},
+					"oneShot": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"validFrom": {
+						"type": "string"
+					},
+					"validUntil": {
+						"type": "string"
+					},
+					"createdAt": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"nullable": true
+					},
+					"deleted_at": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"code",
+					"type",
+					"value",
+					"oneShot",
+					"validFrom",
+					"validUntil"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ICouponUpdateProps": {
+				"properties": {
+					"type": {
+						"type": "string",
+						"enum": [
+							"percent",
+							"fixed"
+						]
+					},
+					"value": {
+						"type": "number",
+						"format": "double"
+					},
+					"oneShot": {
+						"type": "boolean",
+						"nullable": true
+					},
+					"validFrom": {
+						"type": "string"
+					},
+					"validUntil": {
+						"type": "string"
+					},
+					"updatedAt": {
+						"type": "string",
+						"nullable": true
+					}
+				},
+				"required": [
+					"type",
+					"value",
+					"oneShot",
+					"validFrom",
+					"validUntil"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -163,14 +255,22 @@
 				"operationId": "GetProducts",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "",
 						"content": {
 							"application/json": {
 								"schema": {
-									"items": {
-										"$ref": "#/components/schemas/IProductsDataProps"
+									"properties": {
+										"data": {
+											"items": {
+												"$ref": "#/components/schemas/IProductsDataProps"
+											},
+											"type": "array"
+										}
 									},
-									"type": "array"
+									"required": [
+										"data"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -188,11 +288,19 @@
 				"operationId": "GetProductById",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/IProductsDataProps"
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/IProductsDataProps"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -218,11 +326,19 @@
 				"operationId": "UpdateProduct",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "",
 						"content": {
 							"application/json": {
 								"schema": {
-									"$ref": "#/components/schemas/IProductUpdateProps"
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/IProductUpdateProps"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -263,6 +379,24 @@
 							"application/json": {
 								"schema": {
 									"type": "boolean"
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
 								}
 							}
 						}
@@ -308,6 +442,24 @@
 								}
 							}
 						}
+					},
+					"204": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"type": "boolean"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
+								}
+							}
+						}
 					}
 				},
 				"tags": [
@@ -335,6 +487,220 @@
 						}
 					}
 				}
+			}
+		},
+		"/coupons": {
+			"post": {
+				"operationId": "AddCoupons",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"201": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Cupons"
+				],
+				"security": [],
+				"parameters": [],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ICouponProps"
+							}
+						}
+					}
+				}
+			},
+			"get": {
+				"operationId": "GetCoupons",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"items": {
+												"$ref": "#/components/schemas/ICouponProps"
+											},
+											"type": "array"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Cupons"
+				],
+				"security": [],
+				"parameters": []
+			}
+		},
+		"/coupons/{code}": {
+			"get": {
+				"operationId": "GetCouponById",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"$ref": "#/components/schemas/ICouponProps"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Cupons"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "code",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"patch": {
+				"operationId": "UpdateCoupon",
+				"responses": {
+					"200": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Cupons"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "code",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"$ref": "#/components/schemas/ICouponUpdateProps"
+							}
+						}
+					}
+				}
+			},
+			"delete": {
+				"operationId": "InactivateCoupon",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Cupons"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "code",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
 			}
 		}
 	},
