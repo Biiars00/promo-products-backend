@@ -13,8 +13,7 @@ import {
 } from 'tsoa';
 import { ProductsService } from '../../services/products/products.service';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
-import { ICheckStockProps, IProductsProps, IProductUpdateProps } from '../../interfaces/repositories/products.interface';
-import { IProductsDataProps } from '../../interfaces/services/products.interface';
+import { ICheckStockProps, IProductsDataProps, IProductsProps, IProductUpdateProps } from '../../interfaces/services/products/products.interface';
 
 @injectable()
 @Route('products')
@@ -33,7 +32,7 @@ export class ProductsController {
     try {
       const { name, description, stock, price } = body;
 
-      if (!name || !description || !stock || !price) {
+      if (!name || !stock || !price) {
         throw new ErrorMiddleware(400, 'Missing required data');
       }
 
@@ -57,18 +56,25 @@ export class ProductsController {
   }
 
   @Get('/')
-  async getProducts(): Promise<IProductsDataProps[]> {
+  async getProducts(
+    @Res() setStatus: TsoaResponse<200, { data: IProductsDataProps[] }>
+  ): Promise<IProductsDataProps[]> {
     try {
       const response = await this.productsService.getProducts();
 
-      return response;
+      return setStatus(200, {
+        data: response,
+      });
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
   }
 
   @Get('/:id')
-  async getProductById(@Path() id: number): Promise<IProductsDataProps> {
+  async getProductById(
+    @Path() id: number,
+    @Res() setStatus: TsoaResponse<200, { data: IProductsDataProps }>
+  ): Promise<IProductsDataProps> {
     try {
       if (!id) {
         throw new ErrorMiddleware(400, 'Missing required data');
@@ -80,18 +86,22 @@ export class ProductsController {
         throw new ErrorMiddleware(500, 'Failed to fetch product');
       }
 
-      return response;
+      return setStatus(200, {
+        data: response,
+      });
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
   }
 
   @Patch('/:id')
-  async updateProduct(@Path() id: number, @Body() body: IProductUpdateProps): Promise<IProductUpdateProps> {
+  async updateProduct(
+    @Path() id: number, 
+    @Body() body: IProductUpdateProps,
+    @Res() setStatus: TsoaResponse<200, { data: IProductUpdateProps }>
+  ): Promise<IProductUpdateProps> { 
     try {
-      const { stock, price } = body;
-
-      if (!id || !stock || !price) {
+      if (!id) {
         throw new ErrorMiddleware(400, 'Missing required data');
       }
 
@@ -100,14 +110,21 @@ export class ProductsController {
       if (!response) {
         throw new ErrorMiddleware(500, 'Failed to fetch product');
       }
-      return response;
+      
+      return setStatus(200, {
+        data: response,
+      });
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
   }
 
   @Delete('/:id')
-  async inactivateProduct(@Path() id: number, @Body() body: ICheckStockProps): Promise<boolean> {
+  async inactivateProduct(
+    @Path() id: number, 
+    @Body() body: ICheckStockProps,
+    @Res() setStatus: TsoaResponse<204, { data: boolean }>
+  ): Promise<boolean> {
     try {
       if (!id) {
         throw new ErrorMiddleware(400, 'Missing required data');
@@ -115,14 +132,20 @@ export class ProductsController {
 
       const response = await this.productsService.inactivateProduct(id, body);
 
-      return response;
+      return setStatus(204, {
+        data: response,
+      });
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
   }
 
   @Post('/:id/restore')
-  async reactivateProduct(@Path() id: number, @Body() body: ICheckStockProps): Promise<boolean> {
+  async reactivateProduct(
+    @Path() id: number, 
+    @Body() body: ICheckStockProps,
+    @Res() setStatus: TsoaResponse<204, { data: boolean }>
+  ): Promise<boolean> {
     try {
       if (!id) {
         throw new ErrorMiddleware(400, 'Missing required data');
@@ -130,7 +153,9 @@ export class ProductsController {
 
       const response = await this.productsService.reactivateProduct(id, body);
 
-      return response;
+      return setStatus(204, {
+        data: response,
+      });
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
