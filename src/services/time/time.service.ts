@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import ITimeService from '../../interfaces/services/time.interface';
+import ITimeService from '../../interfaces/services/time/time.interface';
 
 @injectable()
 export class TimeService implements ITimeService {
