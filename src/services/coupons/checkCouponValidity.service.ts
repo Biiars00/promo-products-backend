@@ -1,9 +1,9 @@
 import { injectable } from 'tsyringe';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
-import { IValidateCuponProps } from '../../interfaces/services/coupons/checkCouponValidity.interface';
+import ICheckCouponValidityService, { IValidateCuponProps } from '../../interfaces/services/coupons/checkCouponValidity.interface';
 
 @injectable()
-export class CheckCouponValidityService  {
+export class CheckCouponValidityService implements ICheckCouponValidityService  {
     async checkCouponValidity(data: IValidateCuponProps): Promise<void> {
         if (data.currentDate > data.validFrom)  {
             throw new ErrorMiddleware(400, 'The initial expiration date of the coupon must be greater than or equal to the current date.');
