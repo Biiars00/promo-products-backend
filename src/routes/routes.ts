@@ -7,6 +7,8 @@ import type { TsoaRoute } from '@tsoa/runtime';
 import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProductsController } from './../controllers/products/products.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { CouponsController } from './../controllers/coupons/coupons.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -53,6 +55,35 @@ const models: TsoaRoute.Models = {
         "dataType": "refObject",
         "properties": {
             "is_out_of_stock": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ICouponProps": {
+        "dataType": "refObject",
+        "properties": {
+            "code": {"dataType":"string","required":true},
+            "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["percent"]},{"dataType":"enum","enums":["fixed"]}],"required":true},
+            "value": {"dataType":"double","required":true},
+            "oneShot": {"dataType":"boolean","required":true},
+            "validFrom": {"dataType":"string","required":true},
+            "validUntil": {"dataType":"string","required":true},
+            "createdAt": {"dataType":"string"},
+            "updatedAt": {"dataType":"string"},
+            "deletedAt": {"dataType":"string"},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ICouponUpdateProps": {
+        "dataType": "refObject",
+        "properties": {
+            "type": {"dataType":"union","subSchemas":[{"dataType":"enum","enums":["percent"]},{"dataType":"enum","enums":["fixed"]}],"required":true},
+            "value": {"dataType":"double","required":true},
+            "oneShot": {"dataType":"boolean","required":true},
+            "validFrom": {"dataType":"string","required":true},
+            "validUntil": {"dataType":"string","required":true},
+            "updatedAt": {"dataType":"string"},
         },
         "additionalProperties": false,
     },
@@ -246,6 +277,161 @@ export function RegisterRoutes(app: Router) {
 
               await templateService.apiHandler({
                 methodName: 'reactivateProduct',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCouponsController_addCoupons: Record<string, TsoaRoute.ParameterSchema> = {
+                body: {"in":"body","name":"body","required":true,"ref":"ICouponProps"},
+                setStatus: {"in":"res","name":"201","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.post('/coupons',
+            ...(fetchMiddlewares<RequestHandler>(CouponsController)),
+            ...(fetchMiddlewares<RequestHandler>(CouponsController.prototype.addCoupons)),
+
+            async function CouponsController_addCoupons(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_addCoupons, request, response });
+
+                const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'addCoupons',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCouponsController_getCoupons: Record<string, TsoaRoute.ParameterSchema> = {
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"array","array":{"dataType":"refObject","ref":"ICouponProps"},"required":true}}},
+        };
+        app.get('/coupons',
+            ...(fetchMiddlewares<RequestHandler>(CouponsController)),
+            ...(fetchMiddlewares<RequestHandler>(CouponsController.prototype.getCoupons)),
+
+            async function CouponsController_getCoupons(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_getCoupons, request, response });
+
+                const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'getCoupons',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCouponsController_getCouponById: Record<string, TsoaRoute.ParameterSchema> = {
+                code: {"in":"path","name":"code","required":true,"dataType":"string"},
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"ref":"ICouponProps","required":true}}},
+        };
+        app.get('/coupons/:code',
+            ...(fetchMiddlewares<RequestHandler>(CouponsController)),
+            ...(fetchMiddlewares<RequestHandler>(CouponsController.prototype.getCouponById)),
+
+            async function CouponsController_getCouponById(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_getCouponById, request, response });
+
+                const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'getCouponById',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCouponsController_updateCoupon: Record<string, TsoaRoute.ParameterSchema> = {
+                code: {"in":"path","name":"code","required":true,"dataType":"string"},
+                body: {"in":"body","name":"body","required":true,"ref":"ICouponUpdateProps"},
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.patch('/coupons/:code',
+            ...(fetchMiddlewares<RequestHandler>(CouponsController)),
+            ...(fetchMiddlewares<RequestHandler>(CouponsController.prototype.updateCoupon)),
+
+            async function CouponsController_updateCoupon(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_updateCoupon, request, response });
+
+                const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'updateCoupon',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsCouponsController_inactivateCoupon: Record<string, TsoaRoute.ParameterSchema> = {
+                code: {"in":"path","name":"code","required":true,"dataType":"string"},
+                setStatus: {"in":"res","name":"204","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.delete('/coupons/:code',
+            ...(fetchMiddlewares<RequestHandler>(CouponsController)),
+            ...(fetchMiddlewares<RequestHandler>(CouponsController.prototype.inactivateCoupon)),
+
+            async function CouponsController_inactivateCoupon(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_inactivateCoupon, request, response });
+
+                const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'inactivateCoupon',
                 controller,
                 response,
                 next,
