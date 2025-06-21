@@ -1,14 +1,29 @@
-import { ICheckStockProps, IProductsProps, IProductUpdateProps } from "../repositories/products.interface";
+export interface IProductsProps {
+  name: string,
+  description?: string,
+  stock: number,
+  price: number
+}
 
 export interface IProductsDataProps {
-  id: number;
-  name: string;
-  description?: string;
-  stock: number;
-  price: number;
-  created_at: string;
-  updated_at: string;
-  is_out_of_stock: boolean;
+  id: number,
+  name: string,
+  description?: string,
+  stock: number,
+  price: number,
+  createdAt: string,
+  updatedAt: string | null,
+  isOutOfStock: boolean
+}
+
+export interface IProductUpdateProps {
+  stock?: number,
+  price?: number,
+  updatedAt?: string | null
+}
+
+export interface ICheckStockProps {
+  isOutOfStock: boolean
 }
 
 interface IProductsService {

@@ -1,13 +1,13 @@
 import { injectable } from 'tsyringe';
 import IProductsRepository, {
-  ICheckStockProps,
+  ICheckStockDBProps,
   IProductsDataDBProps,
-  IProductsProps,
-  IProductUpdateProps,
-} from '../../interfaces/repositories/products.interface';
+  IProductUpdateDBProps,
+} from '../../interfaces/repositories/products/products.interface';
 import { connection } from '../../database/databaseConnection';
 import { ResultSetHeader } from 'mysql2';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
+import { IProductsProps } from '../../interfaces/services/products/products.interface';
 
 @injectable()
 export class ProductsRepository implements IProductsRepository {
@@ -58,72 +58,33 @@ export class ProductsRepository implements IProductsRepository {
     return dataProduct;
   }
 
-  async updateProductFromDB(id: number, data: IProductUpdateProps, updatedAtt: Date): Promise<IProductUpdateProps> {
-    const [columns] = await connection.execute(
-    `SELECT COLUMN_NAME 
-     FROM INFORMATION_SCHEMA.COLUMNS 
-     WHERE TABLE_SCHEMA = ?
-     AND TABLE_NAME = 'products' 
-     AND COLUMN_NAME = 'updated_at'`,
-     [this.database]
-  );
-
-    const columnExists = (columns as any[]).length > 0;
-
-    if (!columnExists) {
-      await connection.execute(
-        `ALTER TABLE products 
-         ADD COLUMN updated_at DATETIME NOT NULL 
-         DEFAULT CURRENT_TIMESTAMP`
-      );
-    }
-
-    const { stock, price } = data;
+  async updateProductFromDB(id: number, data: IProductUpdateDBProps): Promise<IProductUpdateDBProps> {
+    const { stock, price, updated_at } = data;
 
     const [result] = await connection.execute<ResultSetHeader>(
       `UPDATE products 
       SET stock = ?, price = ?, updated_at = ? 
       WHERE id = ?`,
-      [stock, price, updatedAtt, id],
+      [stock, price, updated_at, id],
     );
 
     if (result.affectedRows === 0) {
       throw new ErrorMiddleware(404, 'Product not found!');
     }
 
-    const [searchProduct] = await connection.execute(
-      'SELECT stock, price FROM products WHERE id = ?',
-      [id]
+    const [rows] = await connection.execute(
+      `SELECT stock, price, updated_at 
+       FROM products 
+       WHERE id = ?`,
+      [id],
     );
 
-    const dataProduct = (searchProduct as IProductUpdateProps[])[0];
-
-    if (!dataProduct) {
-      throw new ErrorMiddleware(404, 'Product not found!');
-    }
+    const dataProduct = (rows as IProductUpdateDBProps[])[0];
 
     return dataProduct;
   }
 
-  async inactivateProductFromDB(id: number, data: ICheckStockProps): Promise<boolean> {
-    const [columns] = await connection.execute(
-      `SELECT COLUMN_NAME 
-       FROM INFORMATION_SCHEMA.COLUMNS 
-       WHERE TABLE_SCHEMA = ?
-       AND TABLE_NAME = 'products' 
-       AND COLUMN_NAME = 'is_out_of_stock'`,
-      [this.database]
-    );
-
-    const columnExists = (columns as any[]).length > 0;
-
-    if (!columnExists) {
-      await connection.execute(
-        `ALTER TABLE products 
-         ADD COLUMN is_out_of_stock BOOL`
-      );
-    }
-
+  async inactivateProductFromDB(id: number, data: ICheckStockDBProps): Promise<boolean> {
     const { is_out_of_stock } = data;
 
     const [result] = await connection.execute<ResultSetHeader>(
@@ -140,7 +101,7 @@ export class ProductsRepository implements IProductsRepository {
     return true;
   }
 
-  async reactivateProductFromDB(id: number, data: ICheckStockProps): Promise<boolean> {
+  async reactivateProductFromDB(id: number, data: ICheckStockDBProps): Promise<boolean> {
     const { is_out_of_stock } = data;
 
     const [result] = await connection.execute<ResultSetHeader>(
