@@ -32,6 +32,40 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"ICalculateApplyCouponProps": {
+				"properties": {
+					"finalPrice": {
+						"type": "number",
+						"format": "double"
+					},
+					"discount": {
+						"properties": {
+							"appliedAt": {
+								"type": "string"
+							},
+							"value": {
+								"type": "number",
+								"format": "double"
+							},
+							"type": {
+								"type": "string"
+							}
+						},
+						"required": [
+							"appliedAt",
+							"value",
+							"type"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"finalPrice",
+					"discount"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"IProductsDataProps": {
 				"properties": {
 					"id": {
@@ -61,6 +95,14 @@
 					},
 					"isOutOfStock": {
 						"type": "boolean"
+					},
+					"activeCoupon": {
+						"allOf": [
+							{
+								"$ref": "#/components/schemas/ICalculateApplyCouponProps"
+							}
+						],
+						"nullable": true
 					}
 				},
 				"required": [
@@ -70,7 +112,51 @@
 					"price",
 					"createdAt",
 					"updatedAt",
-					"isOutOfStock"
+					"isOutOfStock",
+					"activeCoupon"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"IPaginatedProducts": {
+				"properties": {
+					"data": {
+						"items": {
+							"$ref": "#/components/schemas/IProductsDataProps"
+						},
+						"type": "array"
+					},
+					"meta": {
+						"properties": {
+							"totalPages": {
+								"type": "number",
+								"format": "double"
+							},
+							"totalItems": {
+								"type": "number",
+								"format": "double"
+							},
+							"limit": {
+								"type": "number",
+								"format": "double"
+							},
+							"page": {
+								"type": "number",
+								"format": "double"
+							}
+						},
+						"required": [
+							"totalPages",
+							"totalItems",
+							"limit",
+							"page"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"data",
+					"meta"
 				],
 				"type": "object",
 				"additionalProperties": false
@@ -118,8 +204,15 @@
 						]
 					},
 					"value": {
-						"type": "number",
-						"format": "double"
+						"anyOf": [
+							{
+								"type": "number",
+								"format": "double"
+							},
+							{
+								"type": "string"
+							}
+						]
 					},
 					"oneShot": {
 						"type": "boolean",
@@ -138,7 +231,7 @@
 						"type": "string",
 						"nullable": true
 					},
-					"deleted_at": {
+					"deletedAt": {
 						"type": "string",
 						"nullable": true
 					}
@@ -259,18 +352,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"data": {
-											"items": {
-												"$ref": "#/components/schemas/IProductsDataProps"
-											},
-											"type": "array"
-										}
-									},
-									"required": [
-										"data"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/IPaginatedProducts"
 								}
 							}
 						}
@@ -280,7 +362,110 @@
 					"Produtos"
 				],
 				"security": [],
-				"parameters": []
+				"parameters": [
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "limit",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "search",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "minPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "maxPrice",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "hasDiscount",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortBy",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"name",
+								"price",
+								"created_at",
+								"stock"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "sortOrder",
+						"required": false,
+						"schema": {
+							"type": "string",
+							"enum": [
+								"asc",
+								"desc"
+							]
+						}
+					},
+					{
+						"in": "query",
+						"name": "includeDeleted",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "onlyOutOfStock",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					},
+					{
+						"in": "query",
+						"name": "withCouponApplied",
+						"required": false,
+						"schema": {
+							"type": "boolean"
+						}
+					}
+				]
 			}
 		},
 		"/products/{id}": {
@@ -546,18 +731,10 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"data": {
-											"items": {
-												"$ref": "#/components/schemas/ICouponProps"
-											},
-											"type": "array"
-										}
+									"items": {
+										"$ref": "#/components/schemas/ICouponProps"
 									},
-									"required": [
-										"data"
-									],
-									"type": "object"
+									"type": "array"
 								}
 							}
 						}
@@ -579,15 +756,7 @@
 						"content": {
 							"application/json": {
 								"schema": {
-									"properties": {
-										"data": {
-											"$ref": "#/components/schemas/ICouponProps"
-										}
-									},
-									"required": [
-										"data"
-									],
-									"type": "object"
+									"$ref": "#/components/schemas/ICouponProps"
 								}
 							}
 						}
@@ -698,6 +867,125 @@
 						"required": true,
 						"schema": {
 							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/products/{productId}/discount": {
+			"post": {
+				"operationId": "ApplyCoupon",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"201": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"data": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"data"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Aplicação de Cupons"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "productId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				],
+				"requestBody": {
+					"required": true,
+					"content": {
+						"application/json": {
+							"schema": {
+								"properties": {
+									"couponId": {
+										"type": "number",
+										"format": "double"
+									}
+								},
+								"required": [
+									"couponId"
+								],
+								"type": "object"
+							}
+						}
+					}
+				}
+			}
+		},
+		"/products/{productId}/undoDiscount": {
+			"delete": {
+				"operationId": "InactivateCoupon",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"type": "string"
+								}
+							}
+						}
+					},
+					"204": {
+						"description": "",
+						"content": {
+							"application/json": {
+								"schema": {
+									"properties": {
+										"message": {
+											"type": "string"
+										}
+									},
+									"required": [
+										"message"
+									],
+									"type": "object"
+								}
+							}
+						}
+					}
+				},
+				"tags": [
+					"Aplicação de Cupons"
+				],
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "productId",
+						"required": true,
+						"schema": {
+							"format": "double",
+							"type": "number"
 						}
 					}
 				]

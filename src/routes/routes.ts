@@ -9,6 +9,8 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 import { ProductsController } from './../controllers/products/products.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { CouponsController } from './../controllers/coupons/coupons.controller';
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { ApplyCouponController } from './../controllers/applyCoupon/applyCoupons.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -27,6 +29,16 @@ const models: TsoaRoute.Models = {
         "additionalProperties": false,
     },
     // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "ICalculateApplyCouponProps": {
+        "dataType": "refObject",
+        "properties": {
+            "finalPrice": {"dataType":"double","required":true},
+            "discount": {"dataType":"nestedObjectLiteral","nestedProperties":{"appliedAt":{"dataType":"string","required":true},"value":{"dataType":"double","required":true},"type":{"dataType":"string","required":true}},"required":true},
+            "hasCouponApplied": {"dataType":"boolean","required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
     "IProductsDataProps": {
         "dataType": "refObject",
         "properties": {
@@ -38,6 +50,16 @@ const models: TsoaRoute.Models = {
             "createdAt": {"dataType":"string","required":true},
             "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}],"required":true},
             "isOutOfStock": {"dataType":"boolean","required":true},
+            "activeCoupon": {"dataType":"union","subSchemas":[{"ref":"ICalculateApplyCouponProps"},{"dataType":"enum","enums":[null]}],"required":true},
+        },
+        "additionalProperties": false,
+    },
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+    "IPaginatedProducts": {
+        "dataType": "refObject",
+        "properties": {
+            "data": {"dataType":"array","array":{"dataType":"refObject","ref":"IProductsDataProps"},"required":true},
+            "meta": {"dataType":"nestedObjectLiteral","nestedProperties":{"totalPages":{"dataType":"double","required":true},"totalItems":{"dataType":"double","required":true},"limit":{"dataType":"double","required":true},"page":{"dataType":"double","required":true}},"required":true},
         },
         "additionalProperties": false,
     },
@@ -71,7 +93,7 @@ const models: TsoaRoute.Models = {
             "validUntil": {"dataType":"string","required":true},
             "createdAt": {"dataType":"string"},
             "updatedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
-            "deleted_at": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
+            "deletedAt": {"dataType":"union","subSchemas":[{"dataType":"string"},{"dataType":"enum","enums":[null]}]},
         },
         "additionalProperties": false,
     },
@@ -138,7 +160,18 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsProductsController_getProducts: Record<string, TsoaRoute.ParameterSchema> = {
-                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"array","array":{"dataType":"refObject","ref":"IProductsDataProps"},"required":true}}},
+                setStatus: {"in":"res","name":"200","required":true,"ref":"IPaginatedProducts"},
+                page: {"in":"query","name":"page","dataType":"double"},
+                limit: {"in":"query","name":"limit","dataType":"double"},
+                search: {"in":"query","name":"search","dataType":"string"},
+                minPrice: {"in":"query","name":"minPrice","dataType":"double"},
+                maxPrice: {"in":"query","name":"maxPrice","dataType":"double"},
+                hasDiscount: {"in":"query","name":"hasDiscount","dataType":"boolean"},
+                sortBy: {"in":"query","name":"sortBy","dataType":"union","subSchemas":[{"dataType":"enum","enums":["name"]},{"dataType":"enum","enums":["price"]},{"dataType":"enum","enums":["created_at"]},{"dataType":"enum","enums":["stock"]}]},
+                sortOrder: {"in":"query","name":"sortOrder","dataType":"union","subSchemas":[{"dataType":"enum","enums":["asc"]},{"dataType":"enum","enums":["desc"]}]},
+                includeDeleted: {"in":"query","name":"includeDeleted","dataType":"boolean"},
+                onlyOutOfStock: {"in":"query","name":"onlyOutOfStock","dataType":"boolean"},
+                withCouponApplied: {"in":"query","name":"withCouponApplied","dataType":"boolean"},
         };
         app.get('/products',
             ...(fetchMiddlewares<RequestHandler>(ProductsController)),
@@ -326,7 +359,7 @@ export function RegisterRoutes(app: Router) {
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsCouponsController_getCoupons: Record<string, TsoaRoute.ParameterSchema> = {
-                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"array","array":{"dataType":"refObject","ref":"ICouponProps"},"required":true}}},
+                setStatus: {"in":"res","name":"200","required":true,"dataType":"array","array":{"dataType":"refObject","ref":"ICouponProps"}},
         };
         app.get('/coupons',
             ...(fetchMiddlewares<RequestHandler>(CouponsController)),
@@ -357,7 +390,7 @@ export function RegisterRoutes(app: Router) {
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
         const argsCouponsController_getCouponById: Record<string, TsoaRoute.ParameterSchema> = {
                 code: {"in":"path","name":"code","required":true,"dataType":"string"},
-                setStatus: {"in":"res","name":"200","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"ref":"ICouponProps","required":true}}},
+                setStatus: {"in":"res","name":"200","required":true,"ref":"ICouponProps"},
         };
         app.get('/coupons/:code',
             ...(fetchMiddlewares<RequestHandler>(CouponsController)),
@@ -435,6 +468,69 @@ export function RegisterRoutes(app: Router) {
                 validatedArgs = templateService.getValidatedArgs({ args: argsCouponsController_inactivateCoupon, request, response });
 
                 const controller = container.resolve(CouponsController);
+
+              await templateService.apiHandler({
+                methodName: 'inactivateCoupon',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsApplyCouponController_applyCoupon: Record<string, TsoaRoute.ParameterSchema> = {
+                productId: {"in":"path","name":"productId","required":true,"dataType":"double"},
+                body: {"in":"body","name":"body","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"couponId":{"dataType":"double","required":true}}},
+                setStatus: {"in":"res","name":"201","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"data":{"dataType":"string","required":true}}},
+        };
+        app.post('/products/:productId/discount',
+            ...(fetchMiddlewares<RequestHandler>(ApplyCouponController)),
+            ...(fetchMiddlewares<RequestHandler>(ApplyCouponController.prototype.applyCoupon)),
+
+            async function ApplyCouponController_applyCoupon(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsApplyCouponController_applyCoupon, request, response });
+
+                const controller = container.resolve(ApplyCouponController);
+
+              await templateService.apiHandler({
+                methodName: 'applyCoupon',
+                controller,
+                response,
+                next,
+                validatedArgs,
+                successStatus: undefined,
+              });
+            } catch (err) {
+                return next(err);
+            }
+        });
+        // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+        const argsApplyCouponController_inactivateCoupon: Record<string, TsoaRoute.ParameterSchema> = {
+                productId: {"in":"path","name":"productId","required":true,"dataType":"double"},
+                setStatus: {"in":"res","name":"204","required":true,"dataType":"nestedObjectLiteral","nestedProperties":{"message":{"dataType":"string","required":true}}},
+        };
+        app.delete('/products/:productId/undoDiscount',
+            ...(fetchMiddlewares<RequestHandler>(ApplyCouponController)),
+            ...(fetchMiddlewares<RequestHandler>(ApplyCouponController.prototype.inactivateCoupon)),
+
+            async function ApplyCouponController_inactivateCoupon(request: ExRequest, response: ExResponse, next: any) {
+
+            // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+            let validatedArgs: any[] = [];
+            try {
+                validatedArgs = templateService.getValidatedArgs({ args: argsApplyCouponController_inactivateCoupon, request, response });
+
+                const controller = container.resolve(ApplyCouponController);
 
               await templateService.apiHandler({
                 methodName: 'inactivateCoupon',
