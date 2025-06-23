@@ -10,10 +10,11 @@ import {
   Res,
   TsoaResponse,
   Patch,
+  Query,
 } from 'tsoa';
 import { ProductsService } from '../../services/products/products.service';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
-import { ICheckStockProps, IProductsDataProps, IProductsProps, IProductUpdateProps } from '../../interfaces/services/products/products.interface';
+import { ICheckStockProps, IPaginatedProducts, IProductsDataProps, IProductsProps, IProductUpdateProps } from '../../interfaces/services/products/products.interface';
 
 @injectable()
 @Route('products')
@@ -57,14 +58,37 @@ export class ProductsController {
 
   @Get('/')
   async getProducts(
-    @Res() setStatus: TsoaResponse<200, { data: IProductsDataProps[] }>
-  ): Promise<IProductsDataProps[]> {
+    @Res() setStatus: TsoaResponse<200, IPaginatedProducts>,
+    @Query() page?: number,
+    @Query() limit?: number,
+    @Query() search?: string,
+    @Query() minPrice?: number,
+    @Query() maxPrice?: number,
+    @Query() hasDiscount?: boolean,
+    @Query() sortBy?: 'name' | 'price' | 'created_at' | 'stock',
+    @Query() sortOrder?: 'asc' | 'desc',
+    @Query() includeDeleted?: boolean,
+    @Query() onlyOutOfStock?: boolean,
+    @Query() withCouponApplied?: boolean,
+  ): Promise<IPaginatedProducts> {
     try {
-      const response = await this.productsService.getProducts();
+      const query = {
+        page,
+        limit,
+        search,
+        minPrice,
+        maxPrice,
+        hasDiscount,
+        sortBy,
+        sortOrder,
+        includeDeleted,
+        onlyOutOfStock,
+        withCouponApplied,
+      };
+      
+      const response = await this.productsService.getProducts(query);
 
-      return setStatus(200, {
-        data: response,
-      });
+      return setStatus(200, response);
     } catch (error) {
       throw new Error(`Internal server error - ${error}`);
     }
