@@ -1,3 +1,6 @@
+import { IProductQuery } from "../../repositories/products/products.interface";
+import { ICalculateApplyCouponProps } from "../applyCoupons/calculateValueAppliedCoupon.interface";
+
 export interface IProductsProps {
   name: string,
   description?: string,
@@ -13,7 +16,18 @@ export interface IProductsDataProps {
   price: number,
   createdAt: string,
   updatedAt: string | null,
-  isOutOfStock: boolean
+  isOutOfStock: boolean,
+  activeCoupon: ICalculateApplyCouponProps | null
+}
+
+export interface IPaginatedProducts {
+  data: IProductsDataProps[];
+  meta: {
+    page: number;
+    limit: number;
+    totalItems: number;
+    totalPages: number;
+  };
 }
 
 export interface IProductUpdateProps {
@@ -28,7 +42,7 @@ export interface ICheckStockProps {
 
 interface IProductsService {
   addProducts(data: IProductsProps): Promise<number>;
-  getProducts(): Promise<IProductsDataProps[]>;
+  getProducts(query: IProductQuery): Promise<IPaginatedProducts>;
   getProductById(id: number): Promise<IProductsDataProps>;
   updateProduct(id: number, data: IProductUpdateProps): Promise<IProductUpdateProps>;
   inactivateProduct(id: number, data: ICheckStockProps): Promise<boolean>;
