@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS product_coupon_applications (
   id INT AUTO_INCREMENT PRIMARY KEY,
   coupon_id INT NOT NULL,
   product_id INT NOT NULL,
-  applied_at DATETIME NOT NULL,
-  removed_at DATETIME,
+  applied_at DATETIME DEFAULT NULL,
+  removed_at DATETIME DEFAULT NULL,
   FOREIGN KEY (coupon_id) REFERENCES coupons(id),
   FOREIGN KEY (product_id) REFERENCES products(id)
 );
