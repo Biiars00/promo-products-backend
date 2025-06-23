@@ -42,7 +42,7 @@ export class CouponsService implements ICouponsService {
     const responseDB = await this.couponsRepository.addCouponsFromDB({
       code: normalizedCode,
       type: data.type,
-      value: data.value,
+      value: Number(data.value),
       one_shot: data.oneShot,
       valid_from: validFrom,
       valid_until: validUntil,
@@ -68,10 +68,17 @@ export class CouponsService implements ICouponsService {
         ? this.timeService.dateFormatted(coupon.deleted_at)
         : null;
 
+      let formatValue: string;
+      if (coupon.type === 'percent') {
+        formatValue = `${Math.floor(coupon.value).toString()}%`;
+      } else {
+        formatValue = `R$ ${coupon.value.toString()}`
+      }
+
       return {
             code: coupon.code,
             type: coupon.type,
-            value: coupon.value,
+            value: formatValue,
             oneShot: Boolean(coupon.one_shot),
             validFrom: validFrom,
             validUntil: validUntil,
@@ -87,6 +94,13 @@ export class CouponsService implements ICouponsService {
   async getCouponById(code: string): Promise<ICouponProps> {
     const responseDB = await this.couponsRepository.getCouponByIdFromDB(code);
 
+    let formatValue: string;
+    if (responseDB.type === 'percent') {
+      formatValue = `${Math.floor(responseDB.value).toString()}%`;
+    } else {
+      formatValue = `R$ ${responseDB.value.toString()}`
+    }
+
     if (!responseDB) {
       throw new ErrorMiddleware(404, 'Coupon not found');
     }
@@ -95,20 +109,24 @@ export class CouponsService implements ICouponsService {
     const validUntil = this.timeService.dateFormatted(new Date(responseDB.valid_until));
     const createdAt = this.timeService.dateFormatted(new Date(responseDB.created_at!));
 
-    let updatedAt: string | undefined;
-    if (responseDB.updated_at) {
-      updatedAt = this.timeService.dateFormatted(new Date(responseDB.updated_at));
-    }
+    const updatedAt = responseDB.updated_at
+      ? this.timeService.dateFormatted(responseDB.updated_at)
+      : null;
+
+    const deletedAt = responseDB.deleted_at
+      ? this.timeService.dateFormatted(responseDB.deleted_at)
+      : null;
 
     return {
       code: responseDB.code,
       type: responseDB.type,
-      value: responseDB.value,
+      value: formatValue,
       oneShot: Boolean(responseDB.one_shot),
       validFrom: validFrom,
       validUntil: validUntil,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      deletedAt: deletedAt,
     }
   }
 
