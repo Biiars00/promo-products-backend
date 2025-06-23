@@ -1,9 +1,10 @@
 import { inject, injectable } from 'tsyringe';
-import IProductsService, { ICheckStockProps, IProductsDataProps, IProductsProps, IProductUpdateProps } from '../../interfaces/services/products/products.interface';
+import IProductsService, { ICheckStockProps, IPaginatedProducts, IProductsDataProps, IProductsProps, IProductUpdateProps } from '../../interfaces/services/products/products.interface';
 import ITimeService from '../../interfaces/services/time/time.interface';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
 import IValidateStringRegexService from '../../interfaces/services/validateStringRegex/validateStringRegex.interface';
-import IProductsRepository from '../../interfaces/repositories/products/products.interface';
+import IProductsRepository, { IProductQuery } from '../../interfaces/repositories/products/products.interface';
+import ICalculateValueAppliedCouponService from '../../interfaces/services/applyCoupons/calculateValueAppliedCoupon.interface';
 
 @injectable()
 export class ProductsService implements IProductsService {
@@ -14,6 +15,8 @@ export class ProductsService implements IProductsService {
     private timeService: ITimeService,
     @inject('ValidateStringRegexService')
     private validateStringRegexService: IValidateStringRegexService,
+    @inject('CalculateValueAppliedCouponService')
+    private calculateValueAppliedCouponService: ICalculateValueAppliedCouponService,
   ) {}
 
   async addProducts(data: IProductsProps): Promise<number> {
@@ -29,7 +32,7 @@ export class ProductsService implements IProductsService {
     }
 
     if (data.price < 0.01 && data.price > 1000000.00) {
-      throw new ErrorMiddleware(400, 'Price must be between 0.01 and 1000000.00.');
+      throw new ErrorMiddleware(422, 'Unprocessable Entity. Price must be between 0.01 and 1000000.00.');
     }
 
     const existingProduct = await this.productsRepository.checkNameProductExistsOnDB(validateName);
@@ -51,32 +54,64 @@ export class ProductsService implements IProductsService {
     return responseDB;
   }
 
-  async getProducts(): Promise<IProductsDataProps[]> {
-    const responseDB = await this.productsRepository.getProductsFromDB();
-
-    const productList = responseDB.map((product) => {
-      const createdAt = this.timeService.dateFormatted(new Date(product.created_at));
-      const updatedAt = product.updated_at 
-        ? this.timeService.dateFormatted(new Date(product.updated_at)) 
-        : null;
-
-      return {
-        id: product.id,
-        name: product.name, 
-        description: product.description,
-        stock: product.stock,
-        price: product.price,
-        createdAt: createdAt,
-        updatedAt: updatedAt,
-        isOutOfStock: Boolean(product.is_out_of_stock)
-      };
-    })
+  async getProducts(query: IProductQuery): Promise<IPaginatedProducts> {
+    const responseDB = await this.productsRepository.getProductsFromDB(query);
     
-    return productList;
+    const productList = await Promise.all(
+      responseDB.data.map(async (product) => {
+        const appliedCouponCalculation = await this.calculateValueAppliedCouponService.calculateValueAppliedCoupon(product.id);
+        
+        const createdAt = this.timeService.dateFormatted(new Date(product.created_at));
+
+        const updatedAt = product.updated_at 
+          ? this.timeService.dateFormatted(new Date(product.updated_at)) 
+          : null;
+
+        let stockProduct;
+        if (product.stock === 0) {
+          stockProduct = await this.productsRepository.inactivateProductFromDB(product.id, { is_out_of_stock: true })
+        } else {
+          stockProduct = await this.productsRepository.reactivateProductFromDB(product.id, { is_out_of_stock: false })
+        }
+
+        return {
+          id: product.id,
+          name: product.name, 
+          description: product.description,
+          stock: product.stock,
+          price: product.price,
+          createdAt: createdAt,
+          updatedAt: updatedAt,
+          isOutOfStock: stockProduct,
+          activeCoupon: appliedCouponCalculation
+            ? {
+                finalPrice: appliedCouponCalculation.finalPrice,
+                discount: {
+                  type: appliedCouponCalculation.discount.type,
+                  value: appliedCouponCalculation.discount.value,
+                  appliedAt: appliedCouponCalculation.discount.appliedAt,
+                },
+              }
+            : null,
+        };
+      })
+    ) 
+    
+    return {
+      data: productList,
+      meta: {
+        page: responseDB.meta.page,
+        limit: responseDB.meta.limit,
+        totalItems: responseDB.meta.totalItems,
+        totalPages: responseDB.meta.totalPages,
+      },
+    };
   }
 
   async getProductById(id: number): Promise<IProductsDataProps> {
     const responseDB = await this.productsRepository.getProductByIdFromDB(id);
+
+    const appliedCouponCalculation = await this.calculateValueAppliedCouponService.calculateValueAppliedCoupon(responseDB.id);
     
     const createdAt = this.timeService.dateFormatted(new Date(responseDB.created_at));
     const updatedAt = responseDB.updated_at 
@@ -92,6 +127,16 @@ export class ProductsService implements IProductsService {
       createdAt: createdAt,
       updatedAt: updatedAt,
       isOutOfStock: Boolean(responseDB.is_out_of_stock),
+      activeCoupon: appliedCouponCalculation
+        ? {
+            finalPrice: appliedCouponCalculation.finalPrice,
+            discount: {
+              type: appliedCouponCalculation.discount.type,
+              value: appliedCouponCalculation.discount.value,
+              appliedAt: appliedCouponCalculation.discount.appliedAt,
+            },
+          }
+        : null,
     };
   }
 
