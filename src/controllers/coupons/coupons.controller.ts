@@ -31,8 +31,9 @@ export class CouponsController {
   ): Promise<string> {
     try {
       const { code, type, value, oneShot, validFrom, validUntil } = body;
+      const valueNumber = Number(value);
 
-        if (!code || !type || !value || !validFrom || !validUntil) {
+        if (!code || !type || !valueNumber || !validFrom || !validUntil) {
             throw new ErrorMiddleware(400, 'Missing required data');
         }
 
@@ -41,11 +42,11 @@ export class CouponsController {
         }
 
         if (type === 'percent') {
-            if (value < 1 || value > 80) {
+            if (valueNumber < 1 || valueNumber > 80) {
                 throw new ErrorMiddleware(400, 'Percent discount must be between 1 and 80' );
             }
         } else {
-            if (value < 0) {
+            if (valueNumber < 0) {
                 throw new ErrorMiddleware(400, 'Fixed discount must be between 1 and 1000');
             }
         }
@@ -66,12 +67,12 @@ export class CouponsController {
 
     @Get('/')
     async getCoupons(
-        @Res() setStatus: TsoaResponse<200, { data: ICouponProps[] }>
+        @Res() setStatus: TsoaResponse<200, ICouponProps[]>
     ): Promise<{ message: string; data: ICouponProps[] }> {
         try {
             const response = await this.couponsService.getCoupons();
 
-            return setStatus(200, { data: response });
+            return setStatus(200, response );
         } catch (error) {
             throw new Error(`Internal server error - ${error}`);
         }
@@ -80,7 +81,7 @@ export class CouponsController {
     @Get('/:code')
     async getCouponById(
         @Path() code: string,
-        @Res() setStatus: TsoaResponse<200, { data: ICouponProps }>
+        @Res() setStatus: TsoaResponse<200, ICouponProps >
     ): Promise<ICouponProps> {
         try {
             if (!code) {
@@ -93,7 +94,7 @@ export class CouponsController {
                 throw new ErrorMiddleware(500, 'Failed to fetch coupon');
             }
 
-            return setStatus(200, { data: response });
+            return setStatus(200, response );
         } catch (error) {
             throw new Error(`Internal server error - ${error}`);
         }

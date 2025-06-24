@@ -1,13 +1,13 @@
 export interface ICouponProps {
   code: string,
   type: 'percent' | 'fixed',
-  value: number,
+  value: number | string,
   oneShot: boolean | null,
   validFrom: string,
   validUntil: string,
   createdAt?: string,
   updatedAt?: string | null,
-  deleted_at?: string | null,
+  deletedAt?: string | null,
 }
 
 export interface ICouponUpdateProps {
