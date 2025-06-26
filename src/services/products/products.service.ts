@@ -23,7 +23,7 @@ export class ProductsService implements IProductsService {
     const regex = /^[\p{L}0-9\s\-_,.]+$/u;
     const validateName = this.validateStringRegexService.validadeStringRegex(data.name, regex, 3, 100)
 
-    if (!data.description || data.description.length >= 300) {
+    if (data.description?.length && data.description.length >= 300) {
       throw new ErrorMiddleware(400, 'Description must have a maximum of 300 characters');
     }
 
