@@ -30,10 +30,6 @@ export class CalculateValueAppliedCouponService implements ICalculateValueApplie
       const calculateFinalPrice = Math.max(originalPrice - discountValue, 0).toFixed(2);
       const finalPrice = Number(calculateFinalPrice)
 
-      if (finalPrice <= 0.1) {
-        throw new ErrorMiddleware(400, 'The final value of the product cannot be less than 0.1')
-      }
-  
       const formattedApplicationDate = this.timeService.dateFormatted(activeCoupon.applied_at);
   
       return {
