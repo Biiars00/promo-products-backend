@@ -7,8 +7,7 @@ import IProductsRepository, {
   IProductsDataDBProps,
   IProductUpdateDBProps,
 } from '../../interfaces/repositories/products/products.interface';
-import { connection } from '../../database/databaseConnection';
-import { ResultSetHeader } from 'mysql2';
+import pool from '../../database/databaseConnection';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
 import { IProductsProps } from '../../interfaces/services/products/products.interface';
 
@@ -23,20 +22,24 @@ export class ProductsRepository implements IProductsRepository {
   async getProductQuery(query: IProductQuery): Promise<IProductQuerySql> {
     const where: string[] = [];
     const params: any[] = [];
+    let paramIndex = 1;
 
     if (query.search) {
-      where.push('(name LIKE ? OR description LIKE ?)');
+      where.push(`name LIKE $${paramIndex} OR description ILIKE $${paramIndex + 1}`);
       params.push(`%${query.search}%`, `%${query.search}%`);
+      paramIndex += 2;
     }
 
     if (query.minPrice !== undefined) {
-      where.push('price >= ?');
+      where.push(`price >= $${paramIndex}`);
       params.push(query.minPrice);
+      paramIndex++;
     }
 
     if (query.maxPrice !== undefined) {
-      where.push('price <= ?');
+      where.push(`price <= $${paramIndex}`);
       params.push(query.maxPrice);
+      paramIndex++;
     }
 
     if (query.hasDiscount) {
@@ -73,21 +76,21 @@ export class ProductsRepository implements IProductsRepository {
   async addProductsFromDB(data: IProductsProps, createdAt: Date): Promise<number> {
     const { name, description, stock, price } = data;
 
-    const [result] = await connection.execute<ResultSetHeader>(
+    const result = await pool.query(
       `INSERT INTO products (name, description, stock, price, created_at)
-        VALUES (?, ?, ?, ?, ?)`,
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+      `,
       [name, description, stock, price, createdAt],
     );
 
-    return result.insertId;
+    return result.rows[0].id;
   }
 
   async checkNameProductExistsOnDB(name: string): Promise<boolean> {
-    const [checkName] = await connection.execute('SELECT name FROM products WHERE name = ?', [
-      name,
-    ]);
+    const checkName = await pool.query('SELECT name FROM products WHERE name = $1', [name]);
 
-    return Array.isArray(checkName) && checkName.length > 0;
+    return checkName.rows.length > 0;;
   }
 
   async getProductsFromDB(query: IProductQuery): Promise<IPaginatedDBProducts> {
@@ -104,20 +107,19 @@ export class ProductsRepository implements IProductsRepository {
       LIMIT ${limit} OFFSET ${offset}
     `.trim();
 
-    const [rows] = await connection.execute(sql, params);
+    const dataResult  = await pool.query(sql, params);
 
     const sqlCount = `
-      SELECT COUNT(*) as total FROM products
+      SELECT COUNT(*)::int as total FROM products
       ${whereClause}
     `.trim();
 
-    const [countResult] = await connection.execute(sqlCount, params);
-
-    const totalItems = (countResult as any[])[0].total;
+    const countResult = await pool.query(sqlCount, params);
+    const totalItems = countResult.rows[0].total;
     const totalPages = Math.ceil(totalItems / limit);
 
     return {
-      data: rows as IProductsDataDBProps[],
+      data: dataResult.rows as IProductsDataDBProps[],
       meta: {
         page,
         limit,
@@ -128,11 +130,11 @@ export class ProductsRepository implements IProductsRepository {
   }
 
   async getProductByIdFromDB(id: number): Promise<IProductsDataDBProps> {
-    const [rows] = await connection.execute('SELECT * FROM products WHERE id = ?', [
+    const result = await pool.query('SELECT * FROM products WHERE id = $1', [
       id,
     ]);
 
-    const dataProduct = (rows as IProductsDataDBProps[])[0];
+    const dataProduct = result.rows[0] as IProductsDataDBProps;
 
     if (!dataProduct) {
       throw new ErrorMiddleware(404, 'Product not found!')
@@ -144,40 +146,38 @@ export class ProductsRepository implements IProductsRepository {
   async updateProductFromDB(id: number, data: IProductUpdateDBProps): Promise<IProductUpdateDBProps> {
     const { stock, price, updated_at } = data;
 
-    const [result] = await connection.execute<ResultSetHeader>(
+    const updateResult = await pool.query(
       `UPDATE products 
-      SET stock = ?, price = ?, updated_at = ? 
-      WHERE id = ?`,
+      SET stock = $1, price = $2, updated_at = $3 
+      WHERE id = $4`,
       [stock, price, updated_at, id],
     );
 
-    if (result.affectedRows === 0) {
+    if (updateResult.rowCount === 0) {
       throw new ErrorMiddleware(404, 'Product not found!');
     }
 
-    const [rows] = await connection.execute(
+    const result = await pool.query(
       `SELECT stock, price, updated_at 
        FROM products 
-       WHERE id = ?`,
+       WHERE id = $1`,
       [id],
     );
 
-    const dataProduct = (rows as IProductUpdateDBProps[])[0];
-
-    return dataProduct;
+    return result.rows[0] as IProductUpdateDBProps;
   }
 
   async inactivateProductFromDB(id: number, data: ICheckStockDBProps): Promise<boolean> {
     const { is_out_of_stock } = data;
 
-    const [result] = await connection.execute<ResultSetHeader>(
+    const result = await pool.query(
       `UPDATE products 
-       SET is_out_of_stock = ? 
-       WHERE id = ?`,
+       SET is_out_of_stock = $1 
+       WHERE id = $2`,
       [is_out_of_stock, id],
     );
 
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       throw new ErrorMiddleware(404, 'Product not found!');
     } 
 
@@ -187,14 +187,14 @@ export class ProductsRepository implements IProductsRepository {
   async reactivateProductFromDB(id: number, data: ICheckStockDBProps): Promise<boolean> {
     const { is_out_of_stock } = data;
 
-    const [result] = await connection.execute<ResultSetHeader>(
+    const result = await pool.query(
       `UPDATE products 
-       SET is_out_of_stock = ? 
-       WHERE id = ?`,
+       SET is_out_of_stock = $1
+       WHERE id = $2`,
       [is_out_of_stock, id],
     );
 
-    if (result.affectedRows === 0) {
+    if (result.rowCount === 0) {
       throw new ErrorMiddleware(404, 'Product not found!');
     } 
 

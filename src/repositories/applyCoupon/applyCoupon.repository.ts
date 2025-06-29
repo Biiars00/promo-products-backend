@@ -1,6 +1,5 @@
 import { injectable } from 'tsyringe';
-import { connection } from '../../database/databaseConnection';
-import { ResultSetHeader } from 'mysql2';
+import pool from '../../database/databaseConnection';
 import IApplyCouponRepository, { IActiveCouponDB, IApplyCouponIDProps, IApplyCouponProps } from '../../interfaces/repositories/applyCoupons/applyCoupon.interface';
 import { ErrorMiddleware } from '../../middlewares/error.middleware';
 
@@ -15,45 +14,42 @@ export class ApplyCouponRepository implements IApplyCouponRepository {
   async applyCouponFromDB(data: IApplyCouponProps): Promise<IApplyCouponIDProps> {
     const { product_id, coupon_id, applied_at } = data;
 
-    const [activeCoupon] = await connection.execute(
+    const activeCoupon = await pool.query(
       `
       SELECT * 
       FROM product_coupon_applications 
-      WHERE product_id = ?
+      WHERE product_id = $1
         AND removed_at IS NULL
       `,
       [product_id]
     );
 
-    if ((activeCoupon as any[]).length > 0) {
+    if (activeCoupon.rows.length > 0) {
       throw new ErrorMiddleware(409, 'There is already an active coupon for this product')
     }
 
-    const [insertResult] = await connection.execute<ResultSetHeader>(
+    const insertResult = await pool.query(
       `INSERT INTO product_coupon_applications (product_id, coupon_id, applied_at)
-        VALUES (?, ?, ?)`,
+        VALUES ($1, $2, $3)
+        RETURNING *
+        `,
       [product_id, coupon_id, applied_at],
     ); 
 
-    const [rows] = await connection.execute(
-      `SELECT * FROM product_coupon_applications WHERE id = ?`,
-      [insertResult.insertId]
-    );
-
-    return (rows as any[])[0];
+    return insertResult.rows[0] as IApplyCouponIDProps;
   }
 
   async removeCouponFromDB(data: Omit<IApplyCouponProps, 'coupon_id'>): Promise<boolean> {
     const { product_id, removed_at } = data;
 
-    const [result] = await connection.execute<ResultSetHeader>(
+    const result = await pool.query(
       `UPDATE product_coupon_applications 
-      SET removed_at = ? 
-      WHERE product_id = ? AND removed_at IS NULL;`,
+      SET removed_at = $1 
+      WHERE product_id = $2 AND removed_at IS NULL;`,
       [removed_at, product_id],
     );
 
-    const couponRemoved = (result as ResultSetHeader).affectedRows > 0;
+    const couponRemoved = (result.rowCount ?? 0) > 0;
 
     return couponRemoved;
   }
@@ -61,7 +57,7 @@ export class ApplyCouponRepository implements IApplyCouponRepository {
   async getActiveCouponApplication(productId: number): Promise<IActiveCouponDB> {
     const product_id = productId;
 
-    const [rows] = await connection.execute(
+    const result = await pool.query(
     `
       SELECT c.type,
              c.value,
@@ -79,14 +75,12 @@ export class ApplyCouponRepository implements IApplyCouponRepository {
     `, [product_id]
     );
 
-    const result = (rows as IActiveCouponDB[])[0];
-
-    return result || null;
+    return result.rows[0] || null;
   }
 
   async increaseCouponApplication(couponId: number): Promise<void> {
-    await connection.execute(
-      `UPDATE coupons SET uses_count = uses_count + 1 WHERE id = ?`,
+    await pool.query(
+      `UPDATE coupons SET uses_count = uses_count + 1 WHERE id = $1`,
       [couponId]
     );;
   }
